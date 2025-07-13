@@ -1,0 +1,7 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/cctv_camera/cctv_camera"
+	"$envmap"      "env_cubemap"
+   	"$envmapmask"  "models/cctv_camera/cctv_camera_envmapmask"
+   	"$envmaptint"  "[0.3 0.3 0.3]"
+}

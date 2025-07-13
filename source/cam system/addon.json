@@ -1,0 +1,12 @@
+{
+"title" : "Cam system",
+"type" : "entity",
+"tags" : [ "fun", "roleplay" ],
+"description" : "",
+"ignore" :
+[
+"*.psd",
+"*.vcproj",
+"*.svn"
+]
+}

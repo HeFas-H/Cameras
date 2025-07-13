@@ -1,0 +1,86 @@
+StudioMDL.exe (Mar 26 2025) - Garry's Mod Edition
+Adding mount.cfg path: 'D:\Games\Steam\steamapps\common\Counter-Strike Source\cstrike'
+Adding filesystem addon 'd:\games\steam\steamapps\common\garrysmod\garrysmod\addons\cam system'
+Adding filesystem addon 'd:\games\steam\steamapps\common\garrysmod\garrysmod\addons\darkrpmodification'
+Adding filesystem addon 'd:\games\steam\steamapps\common\garrysmod\garrysmod\addons\publ2'
+Adding filesystem addon 'd:\games\steam\steamapps\common\garrysmod\garrysmod\addons\publish'
+Adding filesystem addon 'd:\games\steam\steamapps\common\garrysmod\garrysmod\addons\другое'
+qdir:    "d:\games\steam\steamapps\common\garrysmod\garrysmod\modelsrc\cameras\cctv_camera\"
+gamedir: "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\"
+g_path:  "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\modelsrc\cameras\cctv_camera\cctv_camera.qc"
+Building binary model files...
+Working on "cctv_camera.qc"
+SMD MODEL cctv_camera.smd
+SMD MODEL PExist.smd
+SMD MODEL CExist.smd
+SMD MODEL Collision_Models.smd
+SMD MODEL anims/idle.smd
+SMD MODEL anims/down.smd
+SMD MODEL anims/up.smd
+SMD MODEL anims/right.smd
+SMD MODEL anims/left.smd
+Processing LOD for material: cctv_camera
+Processing LOD for material: cctv_camera
+Model has 2 convex sub-parts
+Collision model completed.
+---------------------
+writing D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_camera.mdl:
+bones         1748 bytes (4)
+animations     588 bytes (5 anims) (10 frames) [0:00]
+sequences      768 bytes (3 seq) 
+ik/pose        828 bytes
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+textures        72 bytes
+keyvalues        0 bytes
+bone transforms      608 bytes
+bone flex driver       0 bytes
+Collision model volume 1001.23 in^3
+collision        0 bytes
+total         5004
+---------------------
+writing D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_camera.vvd:
+vertices         0 bytes (0 vertices)
+vertices      7968 bytes (166 vertices)
+vertices     20448 bytes (426 vertices)
+tangents         0 bytes (0 vertices)
+tangents      2656 bytes (166 vertices)
+tangents      6816 bytes (426 vertices)
+total        37952 bytes
+---------------------
+Generating optimized mesh "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_camera.dx80.vtx":
+body parts:        24 bytes
+models:           100 bytes
+model LODs:        60 bytes
+meshes:            18 bytes
+strip groups:      50 bytes
+strips:            54 bytes
+verts:           5328 bytes
+indices:         2988 bytes
+bone changes:      32 bytes
+everything:      8630 bytes
+---------------------
+Generating optimized mesh "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_camera.dx90.vtx":
+body parts:        24 bytes
+models:           100 bytes
+model LODs:        60 bytes
+meshes:            18 bytes
+strip groups:      50 bytes
+strips:            54 bytes
+verts:           5328 bytes
+indices:         2988 bytes
+bone changes:      32 bytes
+everything:      8630 bytes
+
+Completed "cctv_camera.qc"
+
+
+

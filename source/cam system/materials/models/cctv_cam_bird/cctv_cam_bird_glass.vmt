@@ -1,0 +1,5 @@
+"VertexLitGeneric"
+{
+    "$basetexture" "models/cctv_cam_bird/cctv_cam_bird_glass"
+    "$translucent" 1
+}   

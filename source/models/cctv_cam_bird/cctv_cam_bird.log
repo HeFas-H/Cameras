@@ -1,0 +1,82 @@
+StudioMDL.exe (Jun 20 2025) - Garry's Mod Edition
+Adding mount.cfg path: 'D:\Games\Steam\steamapps\common\Counter-Strike Source\cstrike'
+Adding filesystem addon 'd:\games\steam\steamapps\common\garrysmod\garrysmod\addons\cam system'
+qdir:    "d:\games\steam\steamapps\common\garrysmod\garrysmod\modelsrc\cameras\cctv_cam_bird\"
+gamedir: "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\"
+g_path:  "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\modelsrc\cameras\cctv_cam_bird\cctv_cam_bird.qc"
+Building binary model files...
+Working on "cctv_cam_bird.qc"
+SMD MODEL cctv_camera.smd
+SMD MODEL PExist.smd
+SMD MODEL CExist.smd
+SMD MODEL Collision_Models.smd
+SMD MODEL anims/idle.smd
+SMD MODEL anims/forward.smd
+SMD MODEL anims/backward.smd
+SMD MODEL anims/yaw_360.smd
+Processing LOD for material: cctv_cam_bird
+Processing LOD for material: cctv_cam_bird_glass
+Processing LOD for material: cctv_cam_bird
+Model has 1 convex sub-parts
+Collision model completed.
+---------------------
+writing D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_cam_bird.mdl:
+bones         1748 bytes (4)
+animations     940 bytes (8 anims) (11 frames) [0:00]
+sequences      788 bytes (3 seq) 
+ik/pose        828 bytes
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+eyeballs         0 bytes (0 eyeballs)
+flexes           0 bytes (0 flexes)
+textures       136 bytes
+keyvalues        0 bytes
+bone transforms      608 bytes
+bone flex driver       0 bytes
+Collision model volume 307.40 in^3
+collision        0 bytes
+total         5624
+---------------------
+writing D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_cam_bird.vvd:
+vertices         0 bytes (0 vertices)
+vertices     13056 bytes (272 vertices)
+vertices      8112 bytes (169 vertices)
+tangents         0 bytes (0 vertices)
+tangents      4352 bytes (272 vertices)
+tangents      2704 bytes (169 vertices)
+total        28288 bytes
+---------------------
+Generating optimized mesh "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_cam_bird.dx80.vtx":
+body parts:        24 bytes
+models:           100 bytes
+model LODs:        60 bytes
+meshes:            27 bytes
+strip groups:      75 bytes
+strips:            81 bytes
+verts:           3969 bytes
+indices:         3312 bytes
+bone changes:      40 bytes
+everything:      7664 bytes
+---------------------
+Generating optimized mesh "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\models/cameras/cctv_cam_bird.dx90.vtx":
+body parts:        24 bytes
+models:           100 bytes
+model LODs:        60 bytes
+meshes:            27 bytes
+strip groups:      75 bytes
+strips:            81 bytes
+verts:           3969 bytes
+indices:         3312 bytes
+bone changes:      40 bytes
+everything:      7664 bytes
+
+Completed "cctv_cam_bird.qc"
+
+
+
