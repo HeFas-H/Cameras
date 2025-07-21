@@ -51,7 +51,7 @@ function ENT:Use(activator, caller)
 	if !( IsValid(caller) and caller:IsPlayer() ) then return end
 	if self:GetPos():DistToSqr(caller:GetPos()) > 128^2 then return end
 	
-	if caller:GetActiveWeapon():GetClass() == "cameras_wrench" then
+	if IsValid(caller:GetActiveWeapon()) and caller:GetActiveWeapon():GetClass() == "cameras_wrench" then
 		if self.Broke then
 			self:RemoveEnts2()
 			self:EmitSound("buttons/lever" .. math.random(1,8) .. ".wav")

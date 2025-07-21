@@ -48,7 +48,7 @@ function ENT:Use(activator, caller)
 	if !( IsValid(caller) and caller:IsPlayer() ) then return end
 	if self:GetPos():DistToSqr(caller:GetPos()) > 128^2 then return end
 
-	if caller:GetActiveWeapon():GetClass() == "cameras_wrench" then
+	if IsValid(caller:GetActiveWeapon()) and caller:GetActiveWeapon():GetClass() == "cameras_wrench" then
 		net.Start('cl_cam_menu')
 			net.WriteEntity(self)
 			net.WriteInt(self.Frequency, 12)
