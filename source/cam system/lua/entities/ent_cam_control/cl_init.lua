@@ -1,8 +1,129 @@
 
 include('shared.lua')
 
+local RT_SIZE = 128 -- Разрешение RT текстуры
+
+local monitorsToRender = {}
+
+
+function ENT:Initialize()
+	self.RTTexture = GetRenderTarget("CamerasRT_" .. self:EntIndex(), RT_SIZE, RT_SIZE)
+    self.ScreenMat = CreateMaterial("CamerasMat_" .. self:EntIndex(), "UnlitGeneric", {
+    ["$basetexture"] = self.RTTexture:GetName(),
+    ["$translucent"] = 0,
+    ["$vertexalpha"] = 0,
+    ["$ignorez"] = 0,
+    ["$nolod"] = 0
+	})
+end
+
 function ENT:Draw()
-    self:DrawModel()
+    self:DrawModel() -- Отрисовываем основную модель монитора
+	
+	local cam = self:GetNWEntity('Camera') or NULL
+    -- Добавляем монитор в список для рендеринга, если у него есть камера
+    if IsValid(cam) and cam != NULL then
+		if !cam.Broke then
+			monitorsToRender[self] = true
+		end
+    end
+
+    -- Отрисовываем черную панель с RT материалом
+    self:DrawScreenPanel()
+end
+
+local noiseTexture = Material("effects/tvscreen_noise002a")
+
+function ENT:DrawScreenPanel()
+
+	if !Cameras.Config.Screen then return end
+
+    local pos = self:GetPos()
+    local ang = self:GetAngles()
+    
+	local cam_pos = Cameras.Monitors[self:GetModel()].pos
+	local cam_ang = Cameras.Monitors[self:GetModel()].ang
+	
+    -- Корректируем позицию экрана (передняя часть монитора)
+    pos = pos + ang:Forward() * cam_pos.Forward + ang:Up() * cam_pos.Up + ang:Right() * cam_pos.Right
+    
+    -- Корректируем угол (чтобы экран смотрел вперед)
+    ang:RotateAroundAxis(ang:Right(), cam_ang.Right)
+    ang:RotateAroundAxis(ang:Up(), cam_ang.Up)
+    ang:RotateAroundAxis(ang:Forward(), cam_ang.Forward)
+    
+    cam.Start3D2D(pos, ang, 0.8)
+        surface.SetDrawColor(0, 0, 0, 255)
+        surface.SetMaterial(self.ScreenMat)
+        surface.DrawTexturedRect(cam_pos.x, cam_pos.y, cam_pos.w, cam_pos.h)
+		
+		if Cameras.Config.NoiseEnabled then
+			surface.SetMaterial(noiseTexture)
+			surface.DrawTexturedRect(cam_pos.x, cam_pos.y, cam_pos.w, cam_pos.h)
+		end
+
+    cam.End3D2D()
+end
+
+hook.Add('PreRender', 'RenderAllMonitorCameras', function()
+    for monitor, _ in pairs(monitorsToRender) do
+        if IsValid(monitor) and IsValid(monitor:GetNWEntity('Camera')) then
+            monitor:RenderCameraView()
+        end
+    end
+	monitorsToRender = {}
+end)
+
+function ENT:RenderCameraView()
+	
+    local camera = self:GetNWEntity('Camera')
+    if not IsValid(camera) then return end
+    
+    camera:SetNoDraw(true)
+    render.PushRenderTarget(self.RTTexture)
+    render.Clear(0, 0, 0, 255)
+	
+    local camPos = camera:GetPos()
+    local camAng = camera:GetAngles()
+    
+    camAng:RotateAroundAxis(camAng:Up(), 0) 
+    camAng:RotateAroundAxis(camAng:Forward(), 0)
+    
+	local min_pitch, max_pitch = camera:GetPoseParameterRange("aim_pitch")
+	local min_yaw, max_yaw = camera:GetPoseParameterRange("aim_yaw")
+	
+	local currentYaw = camera:GetPoseParameter("aim_yaw") * (max_yaw - min_yaw) + min_yaw
+	local currentPitch = camera:GetPoseParameter("aim_pitch") * (max_pitch - min_pitch) + min_pitch
+	
+	local rot_x = (currentYaw - min_yaw) / (max_yaw - min_yaw)
+	local rot_y = (currentPitch - min_pitch) / (max_pitch - min_pitch)
+
+	local ang_y = min_pitch + rot_y * (max_pitch - min_pitch)  -- pitch (вверх/вниз)
+	local ang_x = min_yaw + rot_x * (max_yaw - min_yaw)        -- yaw (влево/вправо)
+
+	localAngles = Angle(ang_y, ang_x, 0)
+	worldAngles = camera:LocalToWorldAngles(localAngles)
+	
+	cam.Start3D(LocalPlayer():GetPos(), LocalPlayer():EyeAngles(), 0)
+    render.RenderView({
+        origin = camPos,
+        angles = worldAngles,
+        x = 0, y = 0,
+        w = RT_SIZE, h = RT_SIZE,
+        fov = 90,
+        drawmonitors = false,
+        drawviewmodel = false,
+        drawviewer = true,
+    })
+	cam.End3D()
+        
+	--render.SetViewPort(0, 0, 32, 32)	
+    render.PopRenderTarget()
+    camera:SetNoDraw(false)
+
+    -- Обновляем материал
+    self.ScreenMat:SetTexture("$basetexture", self.RTTexture)
+	--self.ScreenMat:Recompute()
 end
 
 net.Receive( "cl_cam_cash", function() 
@@ -62,9 +183,11 @@ net.Receive( "cl_control_menu", function()
     
     frame.OnClose = function()
 		black:Close()
+		
+		if !IsValid(cams[current]) then return end
         net.Start('sv_cam_view')
-            net.WriteEntity(ply)
-			net.WriteEntity(self)
+            net.WriteEntity(cams[current]) -- cam
+			net.WriteEntity(self) -- ent
         net.SendToServer()
     end
 
@@ -210,12 +333,15 @@ net.Receive( "cl_control_menu", function()
 	local localAngles, worldAngles
 
 	local nv = {
-		["$pp_colour_colour"] = 0,
-		["$pp_colour_brightness"] = -0.15,
-		["$pp_colour_contrast"] = 1.2,
-		["$pp_colour_mulr"] = 0.3,
-		["$pp_colour_mulg"] = 0.3,
-		["$pp_colour_mulb"] = 0.3
+		[ "$pp_colour_addr" ] = 0.0,
+		[ "$pp_colour_addg" ] = 0.3,
+		[ "$pp_colour_addb" ] = 0.0,
+		[ "$pp_colour_brightness" ] = -0.15,
+		[ "$pp_colour_contrast" ] = 1,2,
+		[ "$pp_colour_colour" ] = 0,
+		[ "$pp_colour_mulr" ] = 0.1,
+		[ "$pp_colour_mulg" ] = 0.1,
+		[ "$pp_colour_mulb" ] = 0.1
 	}
 
     function frame:Paint( w, h )
@@ -244,7 +370,7 @@ net.Receive( "cl_control_menu", function()
             origin = Cameras.Models[cams[current]:GetModel()].origin(cams[current]),
             angles = worldAngles,
             drawviewmodel = false,
-            drawmonitors = true,
+            drawmonitors = false,
             x = x, y = y,
             w = w, h = h,
             fov = _fov,

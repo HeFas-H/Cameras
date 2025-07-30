@@ -5,11 +5,59 @@ Cameras.Config = Cameras.Config or {}
 Cameras.Config.NoiseEnabled = false -- doesnt work with NV
 Cameras.Config.DefaultBreakable = true
 Cameras.Config.NVEnabled = true
+Cameras.Config.Screen = true
 
 Cameras.Monitors = Cameras.Monitors or {}
-Cameras.Monitors["models/props/cs_office/computer.mdl"] = 0
-Cameras.Monitors["models/props_lab/monitor02.mdl"] = 0
-Cameras.Monitors["models/props_lab/securitybank.mdl"] = 0
+Cameras.Monitors["models/props/cs_office/computer.mdl"] = {
+	pos = {
+		x = -4,
+		y = -3,
+		w = 27,
+		h = 20,
+		Forward = 0.3,
+		Up = 22.5,
+		Right = 8.3
+	},
+	ang = {
+		Right = -90,
+		Up = 90,
+		Forward = 0,
+	}
+}
+
+Cameras.Monitors["models/props_lab/monitor02.mdl"] = {
+	pos = {
+		x = -1,
+		y = 0,
+		w = 22,
+		h = 18,
+		Forward = 10.1,
+		Up = 22.2,
+		Right = 8.3
+	},
+	ang = {
+		Right = -82,
+		Up = 90,
+		Forward = 0,
+	}
+}
+
+Cameras.Monitors["models/props_lab/securitybank.mdl"] = {
+	pos = {
+		x = -6,
+		y = -7,
+		w = 37,
+		h = 24,
+		Forward = 12,
+		Up = 80.2,
+		Right = 0
+	},
+	ang = {
+		Right = -90,
+		Up = 90,
+		Forward = 0,
+	}
+}
 
 Cameras.Models = Cameras.Models or {}
 Cameras.Models["models/cameras/cctv_camera.mdl"] = {
@@ -72,6 +120,11 @@ concommand.Add("cameras_NVEnabled", function(ply, cmd, args)
 	cameras_command("NVEnabled", args)
 end)
 
+concommand.Add("cameras_Screen", function(ply, cmd, args)
+	if !ply:IsAdmin() then return end
+	cameras_command("Screen", args)
+end)
+
 end
 
 if CLIENT then
@@ -80,4 +133,49 @@ net.Receive("cameras_command", function()
     Cameras.Config[net.ReadString()] = net.ReadBool()
 end)
 
+    language.Add("spawnmenu.utilities.cameras", "Cameras")
+
+
 end
+
+hook.Add( "AddToolMenuTabs", "myHookClass", function()
+	spawnmenu.AddToolCategory( "Utilities", "Cameras", "#spawnmenu.utilities.cameras" )
+	spawnmenu.AddToolMenuOption( "Utilities", "Cameras", "settings", "Settings", "", "", function( panel )
+	
+	panel:SetName("Settings")
+    panel:SetPadding(10)
+
+	local noiseCheck = panel:CheckBox("Noise")
+    noiseCheck:SetChecked(Cameras.Config.NoiseEnabled)
+    noiseCheck.OnChange = function(_, value) 
+		RunConsoleCommand("cameras_NoiseEnabled", tostring(value)) 
+		--noiseCheck:SetChecked(Cameras.Config.NoiseEnabled) 
+	end
+	panel:ControlHelp("Whether cameras are breakable by default")
+
+    local breakCheck = panel:CheckBox("Breakable")
+    breakCheck:SetChecked(Cameras.Config.DefaultBreakable)
+    breakCheck.OnChange = function(_, value) 
+		RunConsoleCommand("cameras_DefaultBreakable", tostring(value)) 
+		--breakCheck:SetChecked(Cameras.Config.DefaultBreakable) 
+	end
+	panel:ControlHelp("Enable night vision capability")
+
+    local nvCheck = panel:CheckBox("Nightvision")
+    nvCheck:SetChecked(Cameras.Config.NVEnabled)
+    nvCheck.OnChange = function(_, value) 
+		RunConsoleCommand("cameras_NVEnabled", tostring(value)) 
+		--nvCheck:SetChecked(Cameras.Config.NVEnabled) 
+	end
+	panel:ControlHelp("Adds visual noise effect to cameras")
+
+	local scCheck = panel:CheckBox("Screen")
+    scCheck:SetChecked(Cameras.Config.Screen)
+    scCheck.OnChange = function(_, value) 
+		RunConsoleCommand("cameras_Screen", tostring(value)) 
+		--scCheck:SetChecked(Cameras.Config.Screen) 
+	end
+	panel:ControlHelp("Adds screens to monitors")
+	
+	end )
+end )
