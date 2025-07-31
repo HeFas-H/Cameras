@@ -9,7 +9,6 @@ util.AddNetworkString( 'sv_control_menu' )
 util.AddNetworkString( 'sv_cam_view' )
 
 function ENT:Initialize()
-	if SERVER then
 	self:SetModel("models/props_lab/monitor02.mdl") 
 	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetMoveType(MOVETYPE_VPHYSICS)
@@ -27,9 +26,22 @@ function ENT:Initialize()
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
 		self:SetModel(self.SavedModel)
-	end )
+		
+		self:PhysicsInit(SOLID_VPHYSICS)
+		self:SetMoveType(MOVETYPE_VPHYSICS)
+		self:SetSolid(SOLID_VPHYSICS)
+		local phys = self:GetPhysicsObject()
+		if phys:IsValid() then
+			phys:EnableMotion(false)
+			phys:Wake()
+		end
+		
+		--local min, max = self:GetModelBounds()
+		--self:SetRenderBounds(min, max)
 	
-	end
+		self:ResetSequence("0_idle")
+		self:SetSequence("0_idle")
+	end )
 
 end  
 
@@ -79,6 +91,7 @@ function ENT:Use(activator, caller)
 		net.Send(caller)
 		caller:SetFOV(1,0,self)
 		self:SetNWEntity('Camera', cams[0])
+		PrintTable(cams)
 	end
 
 end

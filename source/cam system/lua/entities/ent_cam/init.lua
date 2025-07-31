@@ -31,8 +31,26 @@ function ENT:Initialize()
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
 		self:SetModel(self.SavedModel)
-	end )
+		
+		self:PhysicsInit(SOLID_VPHYSICS)
+		self:SetMoveType(MOVETYPE_VPHYSICS)
+		self:SetSolid(SOLID_VPHYSICS)
+		local phys = self:GetPhysicsObject()
+		if phys:IsValid() then
+			phys:EnableMotion(false)
+			phys:Wake()
+		end
+		
+		--local min, max = self:GetModelBounds()
+		--self:SetRenderBounds(min, max)
 	
+		self:ResetSequence("0_idle")
+		self:SetSequence("0_idle")
+		
+		Cameras.Inited = false
+		
+	end )
+
 	local owner = self:GetCreator()
     if IsValid(owner) and owner:IsPlayer() then
         -- Получаем трассировку взгляда игрока

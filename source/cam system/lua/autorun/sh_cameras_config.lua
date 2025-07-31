@@ -1,11 +1,11 @@
 
 Cameras = Cameras or {}
 Cameras.Config = Cameras.Config or {}
-
 Cameras.Config.NoiseEnabled = false -- doesnt work with NV
 Cameras.Config.DefaultBreakable = true
 Cameras.Config.NVEnabled = true
 Cameras.Config.Screen = true
+Cameras.Config.ScreenPVS = false
 
 Cameras.NV = {
 	[ "$pp_colour_addr" ] = 0.0,
@@ -96,6 +96,10 @@ Cameras.Models["models/cameras/cctv_cam_bird.mdl"] = {
 	end
 }
 
+--Not config
+
+Cameras.Inited = false
+
 if SERVER then
 
 util.AddNetworkString("cameras_command")
@@ -137,6 +141,11 @@ concommand.Add("cameras_Screen", function(ply, cmd, args)
 	cameras_command("Screen", args)
 end)
 
+concommand.Add("cameras_ScreenPVS", function(ply, cmd, args)
+	if !ply:IsAdmin() then return end
+	cameras_command("ScreenPVS", args)
+end)
+
 end
 
 if CLIENT then
@@ -146,7 +155,6 @@ net.Receive("cameras_command", function()
 end)
 
     language.Add("spawnmenu.utilities.cameras", "Cameras")
-
 
 end
 
@@ -185,9 +193,36 @@ hook.Add( "AddToolMenuTabs", "myHookClass", function()
     scCheck:SetChecked(Cameras.Config.Screen)
     scCheck.OnChange = function(_, value) 
 		RunConsoleCommand("cameras_Screen", tostring(value)) 
+		pvCheck:SetEnabled(value)
 		--scCheck:SetChecked(Cameras.Config.Screen) 
 	end
 	panel:ControlHelp("Adds screens to monitors")
 	
+	pvCheck = panel:CheckBox("ScreenPVS")
+    pvCheck:SetChecked(Cameras.Config.ScreenPVS)
+    pvCheck.OnChange = function(_, value) 
+		RunConsoleCommand("cameras_ScreenPVS", tostring(value)) 
+		--scCheck:SetChecked(Cameras.Config.Screen) 
+	end
+	panel:ControlHelp("PVS for all cameras")
+	
 	end )
+end )
+
+hook.Add( "SetupPlayerVisibility", "CamerasRT_Check", function( ply )
+	if !Cameras.Inited then
+		Cameras.Inited = true
+		for _, i in ipairs( ents.FindByClass("ent_cam") ) do
+			if i:IsValid() and !i:TestPVS( ply ) then
+				AddOriginToPVS( i:GetPos() )
+			end
+		end
+	end
+	if Cameras.Config.Screen and Cameras.Config.ScreenPVS then
+		for _, i in ipairs( ents.FindByClass("ent_cam") ) do
+			if i:IsValid() and !i:TestPVS( ply ) then
+				AddOriginToPVS( i:GetPos() )
+			end
+		end
+	end
 end )
