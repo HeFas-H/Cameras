@@ -97,8 +97,10 @@ net.Receive( "sv_change_cam_type", function()
 	local ent = net.ReadEntity()
 
 	if !(IsValid(ent)) then return end
-	
-	ent:RemoveEnts2()
+	print(ent.Broke)
+	if ent.Broke then
+		ent:RemoveEnts2()
+	end
 	
 	ent:SetModel(model)
 	ent.SavedModel = model
