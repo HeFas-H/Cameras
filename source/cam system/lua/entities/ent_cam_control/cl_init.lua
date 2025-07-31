@@ -65,7 +65,7 @@ function ENT:DrawScreenPanel()
     cam.End3D2D()
 end
 
-hook.Add('PreRender', 'RenderAllMonitorCameras', function()
+hook.Add('PreRender', 'CamerasRT_PR', function()
     for monitor, _ in pairs(monitorsToRender) do
         if IsValid(monitor) and IsValid(monitor:GetNWEntity('Camera')) then
             monitor:RenderCameraView()
@@ -244,6 +244,7 @@ net.Receive( "cl_control_menu", function()
     end
 
 	function frame:OnMousePressed(code)
+		if table.IsEmpty(cams) then return end
 		if code == MOUSE_RIGHT then
             current = current < #cams and current + 1 or 1
         elseif code == MOUSE_LEFT then
@@ -335,18 +336,6 @@ net.Receive( "cl_control_menu", function()
 	local ang_x, ang_y
 	local localAngles, worldAngles
 
-	local nv = {
-		[ "$pp_colour_addr" ] = 0.0,
-		[ "$pp_colour_addg" ] = 0.3,
-		[ "$pp_colour_addb" ] = 0.0,
-		[ "$pp_colour_brightness" ] = -0.15,
-		[ "$pp_colour_contrast" ] = 1,2,
-		[ "$pp_colour_colour" ] = 0,
-		[ "$pp_colour_mulr" ] = 0.1,
-		[ "$pp_colour_mulg" ] = 0.1,
-		[ "$pp_colour_mulb" ] = 0.1
-	}
-
     function frame:Paint( w, h )
         draw.DrawText( "No connection", "HudDefault", w/2, h/2, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
 
@@ -382,7 +371,7 @@ net.Receive( "cl_control_menu", function()
         })
 
 		if nightVisionEnabled then
-			DrawColorModify(nv)
+			DrawColorModify(Cameras.NV)
 		end
 	
 		draw.DrawText("E & Space - Exit | WASD - Rotate | LMB & RMB - Change Camera | Mouse Wheel - Zoom | N - Night Vision", "CenterPrintText", w/2, h - 30, Color(255, 255, 255), TEXT_ALIGN_CENTER)

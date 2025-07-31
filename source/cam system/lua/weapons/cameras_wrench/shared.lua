@@ -109,6 +109,9 @@ net.Receive( "sv_change_cam_type", function()
 		phys:EnableMotion(false)
 		phys:Wake()
 	end
+	
+	--local min, max = ent:GetModelBounds()
+	--ent:SetRenderBounds(min, max)
 
 	ent:ResetSequence("0_idle")
 	ent:SetSequence("0_idle")
