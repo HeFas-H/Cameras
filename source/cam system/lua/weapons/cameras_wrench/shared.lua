@@ -98,6 +98,8 @@ net.Receive( "sv_change_cam_type", function()
 
 	if !(IsValid(ent)) then return end
 	
+	ent:RemoveEnts2()
+	
 	ent:SetModel(model)
 	ent.SavedModel = model
 	
@@ -115,6 +117,10 @@ net.Receive( "sv_change_cam_type", function()
 
 	ent:ResetSequence("0_idle")
 	ent:SetSequence("0_idle")
+	
+	if ent.Broke then
+		ent:CreateBrokeCam()
+	end
 	
 end )
 

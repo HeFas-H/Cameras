@@ -32,13 +32,15 @@ function ENT:Initialize()
 		if !IsValid(self) then return end
 		self:SetModel(self.SavedModel)
 		
+		self:RemoveEnts2()
+		
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
 		local phys = self:GetPhysicsObject()
 		if phys:IsValid() then
-			phys:EnableMotion(false)
 			phys:Wake()
+			phys:EnableMotion(false)
 		end
 		
 		--local min, max = self:GetModelBounds()
@@ -48,6 +50,10 @@ function ENT:Initialize()
 		self:SetSequence("0_idle")
 		
 		Cameras.Inited = false
+		
+		if self.Broke then
+			self:CreateBrokeCam()
+		end
 		
 	end )
 
@@ -107,24 +113,8 @@ function ENT:OnTakeDamage()
 	if self.Broke or !self.CanBroke then return end
   
 	self:EmitSound("ambient/energy/spark" .. math.random(5,6) .. ".wav")
-	local cam = ents.Create( "prop_physics" )
-	cam:SetParent( self, 1 )
-	cam:SetModel(self:GetModel())
-	cam:SetAngles( self:GetAngles() )
-	cam:SetPos( self:GetPos() )
-	cam:Spawn()
 	
-	cam:SetBodygroup(1, 1)
-	self:SetBodygroup(2, 1)
-
-	cam:SetParent()
-	cam:SetCollisionGroup(20)
-	cam:SetSolid(SOLID_NONE)
-
-	cam:SetPoseParameter("aim_pitch", self:GetPoseParameter("aim_pitch") ) 
-	cam:SetPoseParameter("aim_yaw", self:GetPoseParameter("aim_yaw") )
-	
-	constraint.Ballsocket( self, cam, 0, 0, Vector( 0, 0, 0 ), 0, 0, 0 )
+	self:CreateBrokeCam()
 
 	self.Broke = true
 	
@@ -138,6 +128,33 @@ function ENT:OnTakeDamage()
 		net.WriteEntity(self)
 		net.WriteBool(self.Broke)
 	net.Broadcast()
+
+end
+
+function ENT:CreateBrokeCam()
+
+	timer.Simple( 0.1, function() 
+
+	local cam = ents.Create( "prop_physics" )
+	cam:SetParent( self, 1 )
+	cam:SetModel(self:GetModel())
+	cam:SetAngles( self:GetAngles() )
+	cam:SetPos( self:GetPos() )
+	cam:Spawn()
+	
+	cam:SetBodygroup(1, 1)
+	self:SetBodygroup(2, 1)
+	
+	cam:SetParent()
+	cam:SetCollisionGroup(20)
+	cam:SetSolid(SOLID_NONE)
+	
+	cam:SetPoseParameter("aim_pitch", self:GetPoseParameter("aim_pitch") ) 
+	cam:SetPoseParameter("aim_yaw", self:GetPoseParameter("aim_yaw") )
+	
+	constraint.Ballsocket( self, cam, 0, 0, Vector( 0, 0, 0 ), 0, 0, 0 )
+
+	end )
 
 end
 
