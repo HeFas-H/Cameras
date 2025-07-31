@@ -145,7 +145,7 @@ net.Receive( "cl_control_menu", function()
             table.insert(cams, cam)
         end
     end
-    PrintTable(cams)
+
     if !( IsValid( ply ) and ply:IsPlayer() and IsValid( self ) ) then return end -- IsAlive()
     if self:GetPos():DistToSqr(ply:GetPos()) > 256^2 then return end
 

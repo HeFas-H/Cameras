@@ -91,7 +91,6 @@ function ENT:Use(activator, caller)
 		net.Send(caller)
 		caller:SetFOV(1,0,self)
 		self:SetNWEntity('Camera', cams[0])
-		PrintTable(cams)
 	end
 
 end
