@@ -7,7 +7,6 @@ function ENT:Draw()
 
 end
 
-
 net.Receive("cl_cam_broke", function()
 	local cam = net.ReadEntity()
     local bool = net.ReadBool()

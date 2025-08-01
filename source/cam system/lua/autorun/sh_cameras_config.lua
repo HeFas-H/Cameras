@@ -1,18 +1,19 @@
 
 Cameras = Cameras or {}
-Cameras.Config = Cameras.Config or {}
-Cameras.Config.NoiseEnabled = false -- doesnt work with NV
-Cameras.Config.DefaultBreakable = true
-Cameras.Config.NVEnabled = true
-Cameras.Config.Screen = true
-Cameras.Config.ScreenPVS = false
+CreateConVar("cameras_noise", "0", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Noise.")
+CreateConVar("cameras_default_breakable", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "DefaultBreakable.")
+CreateConVar("cameras_default_nv", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Nightvision.")
+CreateConVar("cameras_screen", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Screens for monitors.")
+CreateConVar("cameras_screen_pvs", "0", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "PVS for cameras.")
+CreateClientConVar("cameras_screen_size", "128", {FCVAR_ARCHIVE, FCVAR_LUA_CLIENT}, "Screens size.")
+
 
 Cameras.NV = {
 	[ "$pp_colour_addr" ] = 0.0,
-	[ "$pp_colour_addg" ] = 0.3,
+	[ "$pp_colour_addg" ] = 0.25,
 	[ "$pp_colour_addb" ] = 0.0,
-	[ "$pp_colour_brightness" ] = -0.15,
-	[ "$pp_colour_contrast" ] = 1,2,
+	[ "$pp_colour_brightness" ] = -0.05,
+	[ "$pp_colour_contrast" ] = 1.2,
 	[ "$pp_colour_colour" ] = 0,
 	[ "$pp_colour_mulr" ] = 0.1,
 	[ "$pp_colour_mulg" ] = 0.1,

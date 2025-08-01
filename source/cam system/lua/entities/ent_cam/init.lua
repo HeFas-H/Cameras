@@ -24,10 +24,29 @@ function ENT:Initialize()
 	self.Frequency = 0
 	self:SetUseType(3)
 	
-	self.CanBroke = Cameras.Config.DefaultBreakable
+	self.CanBroke = GetConVar("cameras_default_breakable"):GetBool()
 	self.Broke = false
 	
+	self:SetNWInt('FOV', 90)
+	
 	self.SavedModel = self:GetModel()
+	
+	self:SaveReload()
+
+	local owner = self:GetCreator()
+    if IsValid(owner) and owner:IsPlayer() then
+        -- Получаем трассировку взгляда игрока
+        local trace = owner:GetEyeTrace()
+        
+        if trace.Hit then
+            local angles = trace.HitNormal:Angle()
+            self:SetAngles(angles)
+			self:SetPos(trace.HitPos + trace.HitNormal * 0.5)
+        end
+    end
+end
+
+function ENT:SaveReload()
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
 		self:SetModel(self.SavedModel)
@@ -43,9 +62,6 @@ function ENT:Initialize()
 			phys:EnableMotion(false)
 		end
 		
-		--local min, max = self:GetModelBounds()
-		--self:SetRenderBounds(min, max)
-	
 		self:ResetSequence("0_idle")
 		self:SetSequence("0_idle")
 		
@@ -56,18 +72,6 @@ function ENT:Initialize()
 		end
 		
 	end )
-
-	local owner = self:GetCreator()
-    if IsValid(owner) and owner:IsPlayer() then
-        -- Получаем трассировку взгляда игрока
-        local trace = owner:GetEyeTrace()
-        
-        if trace.Hit then
-            local angles = trace.HitNormal:Angle()
-            self:SetAngles(angles)
-			self:SetPos(trace.HitPos + trace.HitNormal * 0.5)
-        end
-    end
 end
 
 function ENT:Use(activator, caller)

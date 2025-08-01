@@ -7,6 +7,7 @@ include('shared.lua')
 util.AddNetworkString( 'cl_control_menu' )
 util.AddNetworkString( 'sv_control_menu' )
 util.AddNetworkString( 'sv_cam_view' )
+util.AddNetworkString( 'sv_cam_changed' )
 
 function ENT:Initialize()
 	self:SetModel("models/props_lab/monitor02.mdl") 
@@ -21,8 +22,14 @@ function ENT:Initialize()
 	self.Frequency = 0
 	self:SetNWEntity('Camera', NULL)
 	self:SetUseType(3)
-	
+
 	self.SavedModel = self:GetModel()
+	
+	self:SaveReload()
+
+end 
+
+function ENT:SaveReload()
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
 		self:SetModel(self.SavedModel)
@@ -42,8 +49,18 @@ function ENT:Initialize()
 		self:ResetSequence("0_idle")
 		self:SetSequence("0_idle")
 	end )
+end
 
-end  
+net.Receive( "sv_cam_changed", function(len, ply) 
+
+	local cam = net.ReadEntity()
+	local fov = net.ReadUInt(8)
+	
+	if !IsValid(cam) or !IsValid(ply) then return end
+	
+	cam:SetNWInt('FOV', fov)
+
+end )
 
 net.Receive( "sv_cam_view", function(len, ply) 
 
@@ -51,7 +68,7 @@ net.Receive( "sv_cam_view", function(len, ply)
 	local ent = net.ReadEntity()
 	
 	if !IsValid(cam) or !IsValid(ply) or !IsValid(ent) then return end
-	
+
 	if ply == cam then
 		ply:SetFOV(0,0,ent)
 	else

@@ -1,13 +1,10 @@
 
 include('shared.lua')
 
-local RT_SIZE = 128 -- Разрешение RT текстуры
-
 local monitorsToRender = {}
 
-
 function ENT:Initialize()
-	self.RTTexture = GetRenderTarget("CamerasRT_" .. self:EntIndex(), RT_SIZE, RT_SIZE)
+	self.RTTexture = GetRenderTarget("CamerasRT_" .. self:EntIndex(), GetConVar("cameras_screen_size"):GetInt(), GetConVar("cameras_screen_size"):GetInt())
     self.ScreenMat = CreateMaterial("CamerasMat_" .. self:EntIndex(), "UnlitGeneric", {
     ["$basetexture"] = self.RTTexture:GetName(),
     ["$translucent"] = 0,
@@ -18,10 +15,10 @@ function ENT:Initialize()
 end
 
 function ENT:Draw()
-    self:DrawModel() -- Отрисовываем основную модель монитора
+    self:DrawModel()
 	
 	local cam = self:GetNWEntity('Camera') or NULL
-    -- Добавляем монитор в список для рендеринга, если у него есть камера
+
     if IsValid(cam) and cam != NULL then
 		if !cam.Broke then
 			monitorsToRender[self] = true
@@ -36,7 +33,7 @@ local noiseTexture = Material("effects/tvscreen_noise002a")
 
 function ENT:DrawScreenPanel()
 
-	if !Cameras.Config.Screen then return end
+	if !GetConVar("cameras_screen"):GetBool() then return end
 
     local pos = self:GetPos()
     local ang = self:GetAngles()
@@ -44,10 +41,8 @@ function ENT:DrawScreenPanel()
 	local cam_pos = Cameras.Monitors[self:GetModel()].pos
 	local cam_ang = Cameras.Monitors[self:GetModel()].ang
 	
-    -- Корректируем позицию экрана (передняя часть монитора)
     pos = pos + ang:Forward() * cam_pos.Forward + ang:Up() * cam_pos.Up + ang:Right() * cam_pos.Right
-    
-    -- Корректируем угол (чтобы экран смотрел вперед)
+
     ang:RotateAroundAxis(ang:Right(), cam_ang.Right)
     ang:RotateAroundAxis(ang:Up(), cam_ang.Up)
     ang:RotateAroundAxis(ang:Forward(), cam_ang.Forward)
@@ -57,7 +52,7 @@ function ENT:DrawScreenPanel()
         surface.SetMaterial(self.ScreenMat)
         surface.DrawTexturedRect(cam_pos.x, cam_pos.y, cam_pos.w, cam_pos.h)
 		
-		if Cameras.Config.NoiseEnabled then
+		if GetConVar("cameras_noise"):GetBool() then
 			surface.SetMaterial(noiseTexture)
 			surface.DrawTexturedRect(cam_pos.x, cam_pos.y, cam_pos.w, cam_pos.h)
 		end
@@ -110,7 +105,7 @@ function ENT:RenderCameraView()
         angles = worldAngles,
         x = 0, y = 0,
         w = RT_SIZE, h = RT_SIZE,
-        fov = 90,
+        fov = camera:GetNWInt('FOV'),
         drawmonitors = false,
         drawviewmodel = false,
         drawviewer = true,
@@ -121,7 +116,6 @@ function ENT:RenderCameraView()
     render.PopRenderTarget()
     camera:SetNoDraw(false)
 
-    -- Обновляем материал
     self.ScreenMat:SetTexture("$basetexture", self.RTTexture)
 	--self.ScreenMat:Recompute()
 end
@@ -154,6 +148,8 @@ net.Receive( "cl_control_menu", function()
 		current = table.KeyFromValue( cams, self:GetNWEntity('Camera'))
 	end
     local _fov = 90
+	if IsValid(cams[current]) then _fov = cams[current]:GetNWInt('FOV') end
+	
     local rotationSpeed = 60
 	local max_fov = 90
 	local min_fov = 35
@@ -186,12 +182,6 @@ net.Receive( "cl_control_menu", function()
     
     frame.OnClose = function()
 		black:Close()
-		
-		if !IsValid(cams[current]) then return end
-        net.Start('sv_cam_view')
-            net.WriteEntity(cams[current]) -- cam
-			net.WriteEntity(self) -- ent
-        net.SendToServer()
     end
 
     -- Таблица для отслеживания нажатых клавиш
@@ -206,12 +196,12 @@ net.Receive( "cl_control_menu", function()
             OnClose()
 		end
 		if key == KEY_N then
-			if Cameras.Config.NVEnabled then
+			if GetConVar("cameras_default_nv"):GetBool() then
 				nightVisionEnabled = !nightVisionEnabled
 				render.SetLightingMode(nightVisionEnabled and 1 or 0)
 				ply:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO)
 			else
-				print("Night vision disabled!")
+				print("Night vision was disabled by the Server!")
 			end
 		end
 		if table.IsEmpty(cams) then return end
@@ -227,10 +217,21 @@ net.Receive( "cl_control_menu", function()
 		for i=1,5 do -- wasd+
 			ply:StopSound("physics/plaster/ceiling_tile_scrape_smooth_loop1.wav")
 		end
-        net.Start('sv_cam_view') -- обновление отображения камеры
+		
+		net.Start('sv_cam_view') -- не трогать, работает на магии
             net.WriteEntity(ply)
             net.WriteEntity(self)
         net.SendToServer()
+		
+		if !IsValid(cams[current]) then
+			
+			net.Start('sv_cam_changed')
+				net.WriteEntity(cams[current])
+				net.WriteUInt(_fov, 8)
+			net.SendToServer()
+		
+		end
+		
 		render.SetLightingMode(0)
 		render.SuppressEngineLighting(false)
 	end
@@ -242,21 +243,24 @@ net.Receive( "cl_control_menu", function()
         end
 		
     end
-
+	--local prev_cam = NULL
 	function frame:OnMousePressed(code)
 		if table.IsEmpty(cams) then return end
-		if code == MOUSE_RIGHT then
-            current = current < #cams and current + 1 or 1
-        elseif code == MOUSE_LEFT then
-            current = current > 1 and current - 1 or #cams
-        end
-		CamChange()
+		if code == MOUSE_RIGHT or code == MOUSE_LEFT then
+			--prev_cam = cams[current]
+			if code == MOUSE_RIGHT then
+				current = current < #cams and current + 1 or 1
+			elseif code == MOUSE_LEFT then
+				current = current > 1 and current - 1 or #cams
+			end
+			CamChange()
+		end
 		--if code == MOUSE_MIDDLE then
 			--frame:SetKeyboardInputEnabled(!frame:IsKeyboardInputEnabled())
 		--end
     end
 
-	if Cameras.Config.NoiseEnabled then
+	if GetConVar("cameras_noise"):GetBool() then
 		local noise = vgui.Create("DImage", frame)
 		noise:SetSize( ScrW(), ScrH())
 		noise:SetImage("effects/tvscreen_noise002a") -- effects/combine_binocoverlay
@@ -282,7 +286,9 @@ net.Receive( "cl_control_menu", function()
         net.SendToServer()
 		targetYaw = currentYaw
         targetPitch = currentPitch
-		_fov = 90
+
+		_fov = cam:GetNWInt('FOV')
+
 	end
 
 	if IsValid(cams[current]) then
@@ -294,6 +300,11 @@ net.Receive( "cl_control_menu", function()
         if !IsValid(cams[current]) then return end
 		ply:EmitSound("buttons/lightswitch2.wav", 0, 200, 0.5, CHAN_AUTO)
         _fov = math.Clamp(_fov - delta*5, min_fov, max_fov)
+		
+		net.Start('sv_cam_changed')
+			net.WriteEntity(cams[current])
+			net.WriteUInt(_fov, 8)
+		net.SendToServer()
     end
 
 	local now
