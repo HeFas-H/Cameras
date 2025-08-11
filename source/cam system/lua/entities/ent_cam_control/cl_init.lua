@@ -14,6 +14,21 @@ function ENT:Initialize()
 	})
 end
 
+local function GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch, ent)
+
+	local rot_x = (currentYaw - min_yaw) / (max_yaw - min_yaw)
+	local rot_y = (currentPitch - min_pitch) / (max_pitch - min_pitch)
+
+	local ang_y = min_pitch + rot_y * (max_pitch - min_pitch)  -- pitch (вверх/вниз)
+	local ang_x = min_yaw + rot_x * (max_yaw - min_yaw)        -- yaw (влево/вправо)
+
+	local localAngles = Angle(ang_y, ang_x, 0)
+	local worldAngles = ent:LocalToWorldAngles(localAngles)
+
+	return worldAngles
+
+end
+
 function ENT:Draw()
     self:DrawModel()
 	
@@ -90,14 +105,7 @@ function ENT:RenderCameraView()
 	local currentYaw = camera:GetPoseParameter("aim_yaw") * (max_yaw - min_yaw) + min_yaw
 	local currentPitch = camera:GetPoseParameter("aim_pitch") * (max_pitch - min_pitch) + min_pitch
 	
-	local rot_x = (currentYaw - min_yaw) / (max_yaw - min_yaw)
-	local rot_y = (currentPitch - min_pitch) / (max_pitch - min_pitch)
-
-	local ang_y = min_pitch + rot_y * (max_pitch - min_pitch)  -- pitch (вверх/вниз)
-	local ang_x = min_yaw + rot_x * (max_yaw - min_yaw)        -- yaw (влево/вправо)
-
-	localAngles = Angle(ang_y, ang_x, 0)
-	worldAngles = camera:LocalToWorldAngles(localAngles)
+	worldAngles = GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch, camera)
 	
 	cam.Start3D(LocalPlayer():GetPos(), LocalPlayer():EyeAngles(), 0)
     render.RenderView({
@@ -159,6 +167,10 @@ net.Receive( "cl_control_menu", function()
     local currentYaw = 0
     local targetPitch = 0
     local targetYaw = 0
+	
+	local infoIsOn = true
+	local flash = nil
+	local flashlightIsOn = false
 
 	local nightVisionEnabled = false
 
@@ -194,8 +206,20 @@ net.Receive( "cl_control_menu", function()
     function frame:OnKeyCodePressed(key) -- Нажат
 		if key == KEY_E or key == KEY_SPACE then
             OnClose()
-		end
-		if key == KEY_N then
+		elseif key == KEY_C then
+			infoIsOn = !infoIsOn
+		elseif key == KEY_F then
+		
+			if GetConVar("cameras_default_light"):GetBool() then
+				flashlightIsOn = !flashlightIsOn
+				
+				if !flashlightIsOn and flash != nil then
+					flash:Remove()
+				end
+			else
+				print("Flashlight was disabled by the Server!")
+			end
+		elseif key == KEY_N then
 			if GetConVar("cameras_default_nv"):GetBool() then
 				nightVisionEnabled = !nightVisionEnabled
 				render.SetLightingMode(nightVisionEnabled and 1 or 0)
@@ -230,6 +254,10 @@ net.Receive( "cl_control_menu", function()
 				net.WriteUInt(_fov, 8)
 			net.SendToServer()
 		
+		end
+		
+		if flash != nil then
+			flash:Remove()
 		end
 		
 		render.SetLightingMode(0)
@@ -318,7 +346,9 @@ net.Receive( "cl_control_menu", function()
         now = CurTime()
         deltaTime = now - lastThink
         lastThink = now
-		
+
+		FlashlightUpdate()
+	
 		if !(keyState[KEY_W] or keyState[KEY_S] or keyState[KEY_A] or keyState[KEY_D]) then return end
 		if table.IsEmpty(cams) or !IsValid(cams[current]) or cams[current].Broke then return end
 		
@@ -343,9 +373,7 @@ net.Receive( "cl_control_menu", function()
 
     end
 
-	local rot_x, rot_y
-	local ang_x, ang_y
-	local localAngles, worldAngles
+	local worldAngles
 
     function frame:Paint( w, h )
         draw.DrawText( "No connection", "HudDefault", w/2, h/2, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
@@ -357,15 +385,8 @@ net.Receive( "cl_control_menu", function()
             return
         end
 
-		rot_x = (currentYaw - min_yaw) / (max_yaw - min_yaw)
-		rot_y = (currentPitch - min_pitch) / (max_pitch - min_pitch)
+		worldAngles = GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch, cams[current])
 
-		ang_y = min_pitch + rot_y * (max_pitch - min_pitch)  -- pitch (вверх/вниз)
-		ang_x = min_yaw + rot_x * (max_yaw - min_yaw)        -- yaw (влево/вправо)
-
-		localAngles = Angle(ang_y, ang_x, 0)
-		worldAngles = cams[current]:LocalToWorldAngles(localAngles)
-		
 		render.SuppressEngineLighting(nightVisionEnabled)
 
 		local x, y = self:GetPos()
@@ -385,9 +406,34 @@ net.Receive( "cl_control_menu", function()
 			DrawColorModify(Cameras.NV)
 		end
 	
-		draw.DrawText("E & Space - Exit | WASD - Rotate | LMB & RMB - Change Camera | Mouse Wheel - Zoom | N - Night Vision", "CenterPrintText", w/2, h - 30, Color(255, 255, 255), TEXT_ALIGN_CENTER)
+		if !infoIsOn then return end
+		draw.DrawText("E & Space - Exit | WASD - Rotate | LMB & RMB - Change Camera | Mouse Wheel - Zoom | N - Night Vision | F - Flashlight | C - Hide info", "CenterPrintText", w/2, h - 30, Color(255, 255, 255), TEXT_ALIGN_CENTER)
         draw.DrawText( "Cam " .. current .. "\nPitch: " .. math.ceil(currentPitch) .. "\nYaw: " .. math.ceil(currentYaw) .. "\nFOV: " .. _fov, "CenterPrintText", 10, 10, Color( 255, 255, 255, 255 ), TEXT_ALIGN_LEFT )
     end 
+	
+	function FlashlightUpdate()
+	
+		if !flashlightIsOn or !IsValid(cams[current]) then return end
+
+		if IsValid(flash) then
+		
+			flash:SetPos(cams[current]:GetPos())
+			flash:SetAngles(GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch,cams[current]))
+			flash:Update()
+
+		else
+		
+			flashlight = ProjectedTexture()
+			flashlight:SetTexture("effects/flashlight001")
+			flashlight:SetFarZ(500)
+			flashlight:SetPos(cams[current]:GetPos())
+			flashlight:SetAngles(GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch,cams[current]))
+			flashlight:Update()
+			flash = flashlight
+		
+		end
+
+	end
     
     if !table.IsEmpty(cams) then
         net.Start('sv_cam_view')
@@ -396,3 +442,4 @@ net.Receive( "cl_control_menu", function()
         net.SendToServer()
     end
 end )
+

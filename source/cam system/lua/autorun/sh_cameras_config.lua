@@ -3,10 +3,10 @@ Cameras = Cameras or {}
 CreateConVar("cameras_noise", "0", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Noise.")
 CreateConVar("cameras_default_breakable", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "DefaultBreakable.")
 CreateConVar("cameras_default_nv", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Nightvision.")
+CreateConVar("cameras_default_light", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Flashlight.")
 CreateConVar("cameras_screen", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "Screens for monitors.")
 CreateConVar("cameras_screen_pvs", "0", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_LUA_SERVER}, "PVS for cameras.")
 CreateClientConVar("cameras_screen_size", "128", {FCVAR_ARCHIVE, FCVAR_LUA_CLIENT}, "Screens size.")
-
 
 Cameras.NV = {
 	[ "$pp_colour_addr" ] = 0.0,

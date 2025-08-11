@@ -12,7 +12,7 @@ SWEP.Category 				= "Cam System"
 SWEP.base = "weapon_base"
 
 SWEP.Spawnable				= true
-SWEP.AdminOnly 				= true
+SWEP.AdminOnly 				= false
 
 SWEP.Primary.ClipSize		= 1
 SWEP.Primary.DefaultClip	= 1
