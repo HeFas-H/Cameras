@@ -152,8 +152,11 @@ net.Receive( "cl_control_menu", function()
     if self:GetPos():DistToSqr(ply:GetPos()) > 256^2 then return end
 
     local current = 1
-	if IsValid(self:GetNWEntity('Camera')) and self:GetNWEntity('Camera') != NULL and not self:GetNWEntity('Camera').Broke then
-		current = table.KeyFromValue( cams, self:GetNWEntity('Camera'))
+
+	if IsValid(self:GetNWEntity('Camera')) and self:GetNWEntity('Camera') != NULL and table.HasValue(cams,self:GetNWEntity('Camera')) then
+		if not self:GetNWEntity('Camera').Broke then
+			current = table.KeyFromValue( cams, self:GetNWEntity('Camera'))
+		end
 	end
     local _fov = 90
 	if IsValid(cams[current]) then _fov = cams[current]:GetNWInt('FOV') end

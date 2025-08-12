@@ -96,6 +96,7 @@ function SWEP:PrimaryAttack()
 		
 	net.Send(self.Owner)
 	self.Owner:SetFOV(1,0,self)
+	self:SetNWEntity('Camera', cams[0])
 
 end
 
