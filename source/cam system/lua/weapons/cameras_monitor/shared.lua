@@ -1,12 +1,12 @@
 AddCSLuaFile()
---include("autorun/sh_cameras_config.lua")
+include("autorun/sh_cameras_autorun.lua")
 
 SWEP.PrintName 				= "Monitor"
     
 SWEP.Author 				= "HeFas"
 SWEP.Contact 				= ""
 SWEP.Purpose				= ""
-SWEP.Instructions			= "Press [IN_ATTACK] to view cameras, Press [IN_ATTACK2] to adjust frequency."
+SWEP.Instructions			= "Press [IN_ATTACK] to view cameras, Press [IN_ATTACK2] to adjust frequency. Press [IN_RELOAD] to quickly change the camera."
 SWEP.Category 				= "Cam System"
 
 SWEP.base = "weapon_base"
@@ -56,6 +56,8 @@ SWEP.ViewModelBoneMods = {
 	["ValveBiped.cube"] = { scale = Vector(0, 0, 0), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
 
+SWEP.Vmodel = nil
+
 SWEP.VElements = {
 	["monitor"] = { type = "Model", model = "models/props_phx/rt_screen.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(4.8, 5.5, 1.5), angle = Angle(200, 20, 0), size = Vector(0.16, 0.16, 0.18), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
@@ -75,6 +77,8 @@ function SWEP:Deploy()
 end
 
 function SWEP:PrimaryAttack()
+
+	if CLIENT then self.Owner:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO) end
 
 	if CLIENT then return end
 	
@@ -109,13 +113,42 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
+	if (self.NextReload or 0) > CurTime() then return end
+	self.NextReload = CurTime() + 0.15
+
+	local cams = {}
+	local j = 1
+	for _, i in ipairs( ents.FindByClass("ent_cam") ) do
+		if i.Frequency != self.Frequency or i.Broke then continue end
+		cams[j] = i
+		j = j + 1
+	end
+	
+	if CLIENT then self.Owner:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO) end
+	local id = table.KeyFromValue(cams, self:GetNWEntity('Camera')) or 1
+	
+	if table.maxn(cams) == id then
+		self:SetNWEntity('Camera', cams[1])
+	else
+		self:SetNWEntity('Camera', cams[id+1])
+	end
+	
 end
 
 function SWEP:Initialize()
-
+	print("123")
 	self:SetHoldType( self.HoldType )
 
 	if CLIENT then
+	
+		self.RTTexture = GetRenderTarget("CamerasRT_" .. self.Weapon:EntIndex(), GetConVar("cameras_screen_size"):GetInt(), GetConVar("cameras_screen_size"):GetInt())
+		self.ScreenMat = CreateMaterial("CamerasMat_" .. self.Weapon:EntIndex(), "VertexLitGeneric", {
+		["$basetexture"] = self.RTTexture:GetName(),
+		["$translucent"] = 0,
+		["$vertexalpha"] = 0,
+		["$ignorez"] = 0,
+		["$nolod"] = 0
+		})
 	
 		self.VElements = table.FullCopy( self.VElements )
 		self.WElements = table.FullCopy( self.WElements )
@@ -128,13 +161,14 @@ function SWEP:Initialize()
 			local vm = self.Owner:GetViewModel()
 			if IsValid(vm) then
 				self:ResetBonePositions(vm)
-				
+
 				if (self.ShowViewModel == nil or self.ShowViewModel) then
 					vm:SetColor(Color(255,255,255,255))
 				else
 					vm:SetColor(Color(255,255,255,1))
-					vm:SetMaterial("Debug/hsv")			
+					vm:SetMaterial("Debug/hsv")						
 				end
+
 			end
 		end
 		
@@ -143,7 +177,6 @@ function SWEP:Initialize()
 end
 
 function SWEP:Holster()
-	
 	if CLIENT and IsValid(self.Owner) then
 		local vm = self.Owner:GetViewModel()
 		if IsValid(vm) then
@@ -163,6 +196,8 @@ if CLIENT then
 
 	SWEP.vRenderOrder = nil
 	function SWEP:ViewModelDrawn()
+	
+		monitorsToRender[self] = true
 		
 		local vm = self.Owner:GetViewModel()
 		if !IsValid(vm) then return end
@@ -213,11 +248,10 @@ if CLIENT then
 				matrix:Scale(v.size)
 				model:EnableMatrix( "RenderMultiply", matrix )
 				
-				if (v.material == "") then
-					model:SetMaterial("")
-				elseif (model:GetMaterial() != v.material) then
-					model:SetMaterial( v.material )
-				end
+				-- Here
+				model:SetMaterial("")
+				local mat = "!" .. self.ScreenMat:GetName()
+				model:SetSubMaterial(1,  mat)
 				
 				if (v.skin and v.skin != model:GetSkin()) then 
 					model:SetSkin(v.skin)
@@ -244,23 +278,6 @@ if CLIENT then
 				if (v.surpresslightning) then
 					render.SuppressEngineLighting(false)
 				end
-				
-			elseif (v.type == "Sprite" and sprite) then
-				
-				local drawpos = pos + ang:Forward() * v.pos.x + ang:Right() * v.pos.y + ang:Up() * v.pos.z
-				render.SetMaterial(sprite)
-				render.DrawSprite(drawpos, v.size.x, v.size.y, v.color)
-				
-			elseif (v.type == "Quad" and v.draw_func) then
-				
-				local drawpos = pos + ang:Forward() * v.pos.x + ang:Right() * v.pos.y + ang:Up() * v.pos.z
-				ang:RotateAroundAxis(ang:Up(), v.angle.y)
-				ang:RotateAroundAxis(ang:Right(), v.angle.p)
-				ang:RotateAroundAxis(ang:Forward(), v.angle.r)
-				
-				cam.Start3D2D(drawpos, ang, v.size)
-					v.draw_func( self )
-				cam.End3D2D()
 
 			end
 			
@@ -328,11 +345,10 @@ if CLIENT then
 				matrix:Scale(v.size)
 				model:EnableMatrix( "RenderMultiply", matrix )
 				
-				if (v.material == "") then
-					model:SetMaterial("")
-				elseif (model:GetMaterial() != v.material) then
-					model:SetMaterial( v.material )
-				end
+				--only client
+				model:SetMaterial("")
+				local mat = "!" .. self.ScreenMat:GetName()
+				model:SetSubMaterial(1,  mat)
 				
 				if (v.skin and v.skin != model:GetSkin()) then
 					model:SetSkin(v.skin)
@@ -458,7 +474,7 @@ if CLIENT then
 				end
 
 				v.createdSprite = v.sprite
-				v.spriteMaterial = CreateMaterial(name,"UnlitGeneric",params)
+				v.spriteMaterial = self.ScreenMat
 				
 			end
 		end

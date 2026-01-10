@@ -1,4 +1,6 @@
 
+monitorsToRender = {}
+
 if CLIENT then
 
     language.Add("spawnmenu.utilities.cameras", "Cameras")
@@ -55,4 +57,75 @@ function CamerasPVS( ply )
 			AddOriginToPVS( i:GetPos() )
 		end
 	end
+end
+
+hook.Add('PreRender', 'CamerasRT_PR', function()
+	if !GetConVar("cameras_screen"):GetBool() then return end
+    for monitor, _ in pairs(monitorsToRender) do
+        if IsValid(monitor) and IsValid(monitor:GetNWEntity('Camera')) then
+			RenderCameraView(monitor)
+        end
+    end
+	monitorsToRender = {}
+end)
+
+
+local function GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch, ent)
+
+	local rot_x = (currentYaw - min_yaw) / (max_yaw - min_yaw)
+	local rot_y = (currentPitch - min_pitch) / (max_pitch - min_pitch)
+
+	local ang_y = min_pitch + rot_y * (max_pitch - min_pitch)  -- pitch (вверх/вниз)
+	local ang_x = min_yaw + rot_x * (max_yaw - min_yaw)        -- yaw (влево/вправо)
+
+	local localAngles = Angle(ang_y, ang_x, 0)
+	local worldAngles = ent:LocalToWorldAngles(localAngles)
+
+	return worldAngles
+	
+end
+
+function RenderCameraView(self)
+	
+    local camera = self:GetNWEntity('Camera')
+	
+    if not IsValid(camera) then return end
+    
+    camera:SetNoDraw(true)
+    render.PushRenderTarget(self.RTTexture)
+    render.Clear(0, 0, 0, 255)
+	
+    local camPos = camera:GetPos()
+    local camAng = camera:GetAngles()
+    
+    camAng:RotateAroundAxis(camAng:Up(), 0) 
+    camAng:RotateAroundAxis(camAng:Forward(), 0)
+    
+	local min_pitch, max_pitch = camera:GetPoseParameterRange("aim_pitch")
+	local min_yaw, max_yaw = camera:GetPoseParameterRange("aim_yaw")
+	
+	local currentYaw = camera:GetPoseParameter("aim_yaw") * (max_yaw - min_yaw) + min_yaw
+	local currentPitch = camera:GetPoseParameter("aim_pitch") * (max_pitch - min_pitch) + min_pitch
+	
+	local worldAngles = GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch, camera)
+	
+	cam.Start3D(LocalPlayer():GetPos(), LocalPlayer():EyeAngles(), 0)
+    render.RenderView({
+        origin = camPos,
+        angles = worldAngles,
+        x = 0, y = 0,
+        w = RT_SIZE, h = RT_SIZE,
+        fov = camera:GetNWInt('FOV'),
+        drawmonitors = false,
+        drawviewmodel = false,
+        drawviewer = true,
+    })
+	cam.End3D()
+    
+	--render.SetViewPort(0, 0, 32, 32)	
+    render.PopRenderTarget()
+    camera:SetNoDraw(false)
+
+    self.ScreenMat:SetTexture("$basetexture", self.RTTexture)
+	--self.ScreenMat:Recompute()
 end

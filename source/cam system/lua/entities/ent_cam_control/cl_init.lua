@@ -1,7 +1,6 @@
 
 include('shared.lua')
-
-local monitorsToRender = {}
+include("autorun/sh_cameras_autorun.lua")
 
 function ENT:Initialize()
 	self.RTTexture = GetRenderTarget("CamerasRT_" .. self:EntIndex(), GetConVar("cameras_screen_size"):GetInt(), GetConVar("cameras_screen_size"):GetInt())
@@ -73,59 +72,6 @@ function ENT:DrawScreenPanel()
 		end
 
     cam.End3D2D()
-end
-
-hook.Add('PreRender', 'CamerasRT_PR', function()
-    for monitor, _ in pairs(monitorsToRender) do
-        if IsValid(monitor) and IsValid(monitor:GetNWEntity('Camera')) then
-            monitor:RenderCameraView()
-        end
-    end
-	monitorsToRender = {}
-end)
-
-function ENT:RenderCameraView()
-	
-    local camera = self:GetNWEntity('Camera')
-    if not IsValid(camera) then return end
-    
-    camera:SetNoDraw(true)
-    render.PushRenderTarget(self.RTTexture)
-    render.Clear(0, 0, 0, 255)
-	
-    local camPos = camera:GetPos()
-    local camAng = camera:GetAngles()
-    
-    camAng:RotateAroundAxis(camAng:Up(), 0) 
-    camAng:RotateAroundAxis(camAng:Forward(), 0)
-    
-	local min_pitch, max_pitch = camera:GetPoseParameterRange("aim_pitch")
-	local min_yaw, max_yaw = camera:GetPoseParameterRange("aim_yaw")
-	
-	local currentYaw = camera:GetPoseParameter("aim_yaw") * (max_yaw - min_yaw) + min_yaw
-	local currentPitch = camera:GetPoseParameter("aim_pitch") * (max_pitch - min_pitch) + min_pitch
-	
-	worldAngles = GetNewAngle(currentYaw, currentPitch, min_yaw, max_yaw, min_pitch, max_pitch, camera)
-	
-	cam.Start3D(LocalPlayer():GetPos(), LocalPlayer():EyeAngles(), 0)
-    render.RenderView({
-        origin = camPos,
-        angles = worldAngles,
-        x = 0, y = 0,
-        w = RT_SIZE, h = RT_SIZE,
-        fov = camera:GetNWInt('FOV'),
-        drawmonitors = false,
-        drawviewmodel = false,
-        drawviewer = true,
-    })
-	cam.End3D()
-        
-	--render.SetViewPort(0, 0, 32, 32)	
-    render.PopRenderTarget()
-    camera:SetNoDraw(false)
-
-    self.ScreenMat:SetTexture("$basetexture", self.RTTexture)
-	--self.ScreenMat:Recompute()
 end
 
 net.Receive( "cl_cam_cash", function() 
