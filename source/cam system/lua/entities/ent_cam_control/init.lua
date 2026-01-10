@@ -30,9 +30,12 @@ function ENT:Initialize()
 end 
 
 function ENT:SaveReload()
+
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
-		self:SetModel(self.SavedModel)
+		if self:GetModel() != self.SavedModel then
+			self:SetModel(self.SavedModel)
+		end
 		
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)

@@ -93,7 +93,7 @@ Cameras.Models["models/cameras/cctv_cam_bird.mdl"] = {
 		return trace.HitPos + trace.HitNormal + trace.HitNormal:Angle():Forward() * 2
 	end,
 	angle = function(trace)
-		return Angle(0,trace.HitNormal:Angle().y,trace.HitNormal:Angle().z)
+		return Angle(trace.HitNormal:Angle().x - 90,trace.HitNormal:Angle().y,trace.HitNormal:Angle().z)
 	end
 }
 

@@ -19,7 +19,7 @@ function ENT:Initialize()
 	local phys = self:GetPhysicsObject()
 	if phys:IsValid() then
 		phys:Wake()
-		phys:EnableMotion(false)
+		--phys:EnableMotion(false)
 	end
 	self.Frequency = 0
 	self:SetUseType(3)
@@ -32,7 +32,7 @@ function ENT:Initialize()
 	self.SavedModel = self:GetModel()
 	
 	self:SaveReload()
-
+	--[[--
 	local owner = self:GetCreator()
     if IsValid(owner) and owner:IsPlayer() then
         -- Получаем трассировку взгляда игрока
@@ -44,12 +44,15 @@ function ENT:Initialize()
 			self:SetPos(trace.HitPos + trace.HitNormal * 0.5)
         end
     end
+	--]]--
 end
 
 function ENT:SaveReload()
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
-		self:SetModel(self.SavedModel)
+		if self:GetModel() != self.SavedModel then
+			self:SetModel(self.SavedModel)
+		end
 		
 		self:RemoveEnts2()
 		

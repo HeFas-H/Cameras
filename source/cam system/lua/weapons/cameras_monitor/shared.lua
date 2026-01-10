@@ -56,8 +56,6 @@ SWEP.ViewModelBoneMods = {
 	["ValveBiped.cube"] = { scale = Vector(0, 0, 0), pos = Vector(0, 0, 0), angle = Angle(0, 0, 0) }
 }
 
-SWEP.Vmodel = nil
-
 SWEP.VElements = {
 	["monitor"] = { type = "Model", model = "models/props_phx/rt_screen.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(4.8, 5.5, 1.5), angle = Angle(200, 20, 0), size = Vector(0.16, 0.16, 0.18), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
@@ -113,8 +111,13 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
+	
 	if (self.NextReload or 0) > CurTime() then return end
-	self.NextReload = CurTime() + 0.15
+	self.NextReload = CurTime() + 0.20
+	
+	if CLIENT then self.Owner:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO) end
+
+	if CLIENT then return end
 
 	local cams = {}
 	local j = 1
@@ -124,7 +127,6 @@ function SWEP:Reload()
 		j = j + 1
 	end
 	
-	if CLIENT then self.Owner:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO) end
 	local id = table.KeyFromValue(cams, self:GetNWEntity('Camera')) or 1
 	
 	if table.maxn(cams) == id then
@@ -136,7 +138,7 @@ function SWEP:Reload()
 end
 
 function SWEP:Initialize()
-	print("123")
+
 	self:SetHoldType( self.HoldType )
 
 	if CLIENT then
@@ -474,7 +476,7 @@ if CLIENT then
 				end
 
 				v.createdSprite = v.sprite
-				v.spriteMaterial = self.ScreenMat
+				v.spriteMaterial = CreateMaterial(name,"UnlitGeneric",params)
 				
 			end
 		end
