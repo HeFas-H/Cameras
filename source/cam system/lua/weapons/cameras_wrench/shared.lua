@@ -83,7 +83,7 @@ net.Receive( "sv_cam_unbreakable", function()
 
 	local ent = net.ReadEntity()
 
-	if !(IsValid(ent)) then return end
+	if !(IsValid(ent)) and ent:GetClass() != "ent_cam" then return end
 	
 	ent:SetCanBroke(!ent:GetCanBroke())
 	print(tostring(ent) .. "`s breakable " .. tostring(ent:GetCanBroke()))
@@ -97,10 +97,16 @@ net.Receive( "sv_change_cam_type", function()
 	local ent = net.ReadEntity()
 
 	if !(IsValid(ent)) then return end
-
-	if ent:GetIsBroke() then
-		ent:RemoveEnts2()
+	
+	if ent:GetClass() == "ent_cam" then
+	
+		if ent:GetIsBroke() then
+			ent:RemoveEnts2()
+			ent:CreateBrokeCam()
+		end
+	
 	end
+
 	
 	ent:SetModel(model)
 	ent:SetSavedModel(model)
@@ -119,10 +125,6 @@ net.Receive( "sv_change_cam_type", function()
 
 	ent:ResetSequence("0_idle")
 	ent:SetSequence("0_idle")
-	
-	if ent:GetIsBroke() then
-		ent:CreateBrokeCam()
-	end
 	
 end )
 
@@ -175,20 +177,22 @@ net.Receive( "cl_wrench_cam", function()
 		end
 	end
 	
-	local DButton = vgui.Create( "DButton", frame )
-	DButton:SetText( "Unbreakable" )	
-	DButton:Dock( BOTTOM )
-	DButton:SetSize( 40, 25 )
-	DButton.DoClick = function()
-		ent:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO)
-		net.Start('sv_cam_unbreakable')
-			net.WriteEntity(ent)
-		net.SendToServer()
-	end
-	DButton.Paint = function( self, w, h ) 
-		draw.RoundedBox( 6, 0, 0, w, h, Color( 200, 200, 200, 230 ) )
-		surface.SetDrawColor(0,0,0,255)
-		surface.DrawOutlinedRect(0, 0, w, h)
+	if ent:GetClass() == "ent_cam" then
+		local DButton = vgui.Create( "DButton", frame )
+		DButton:SetText( "Unbreakable" )	
+		DButton:Dock( BOTTOM )
+		DButton:SetSize( 40, 25 )
+		DButton.DoClick = function()
+			ent:EmitSound("buttons/button15.wav", 0, 150, 1, CHAN_AUTO)
+			net.Start('sv_cam_unbreakable')
+				net.WriteEntity(ent)
+			net.SendToServer()
+		end
+		DButton.Paint = function( self, w, h ) 
+			draw.RoundedBox( 6, 0, 0, w, h, Color( 200, 200, 200, 230 ) )
+			surface.SetDrawColor(0,0,0,255)
+			surface.DrawOutlinedRect(0, 0, w, h)
+		end
 	end
 
 end )
