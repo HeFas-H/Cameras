@@ -54,10 +54,10 @@ function TOOL:LeftClick(trace)
 	cam:SetPos(Cameras.Models[model].pos(cam,trace))
 	cam:Spawn()
 	cam:SetModel(model)
-	cam.SavedModel = model
+	cam:SetSavedModel(model)
 
-	cam.Frequency = frequency
-	cam.CanBroke = tobool(breakable)
+	cam:SetFrequency(frequency)
+	cam:SetCanBroke(tobool(breakable))
     
     cam:SetCollisionGroup(COLLISION_GROUP_WORLD)
     cam:GetPhysicsObject():EnableMotion(false)

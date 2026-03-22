@@ -9,7 +9,6 @@ util.AddNetworkString( 'sv_cam_menu' )
 util.AddNetworkString( 'sh_cam_menu' ) 
 util.AddNetworkString( 'sv_cam_rot' )
 util.AddNetworkString( 'cl_cam_cash' )
-util.AddNetworkString( 'cl_cam_broke' )
 
 function ENT:Initialize()
 	self:SetModel("models/cameras/cctv_camera.mdl")
@@ -21,15 +20,16 @@ function ENT:Initialize()
 		phys:Wake()
 		--phys:EnableMotion(false)
 	end
-	self.Frequency = 0
+	
 	self:SetUseType(3)
 	
-	self.CanBroke = GetConVar("cameras_default_breakable"):GetBool()
-	self.Broke = false
+	self:SetFrequency(0)
+	self:SetIsBroke(false)
+	self:SetCanBroke(GetConVar("cameras_default_breakable"):GetBool())
 	
 	self:SetNWInt('FOV', 90)
 	
-	self.SavedModel = self:GetModel()
+	self:SetSavedModel(self:GetModel())
 	
 	self:SaveReload()
 	--[[--
@@ -47,11 +47,18 @@ function ENT:Initialize()
 	--]]--
 end
 
+function ENT:SetupDataTables()
+    self:NetworkVar("Int", 0, "Frequency")
+    self:NetworkVar("Bool", 0, "IsBroke")
+    self:NetworkVar("Bool", 1, "CanBroke")
+    self:NetworkVar("String", 0, "SavedModel")
+end
+
 function ENT:SaveReload()
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
-		if self:GetModel() != self.SavedModel then
-			self:SetModel(self.SavedModel)
+		if self:GetModel() != self:GetSavedModel() then
+			self:SetModel(self:GetSavedModel())
 		end
 		
 		self:RemoveEnts2()
@@ -70,7 +77,7 @@ function ENT:SaveReload()
 		
 		Cameras.Inited = false
 		
-		if self.Broke then
+		if self:GetIsBroke() then
 			self:CreateBrokeCam()
 		end
 		
@@ -83,20 +90,16 @@ function ENT:Use(activator, caller)
 	if self:GetPos():DistToSqr(caller:GetPos()) > 128^2 then return end
 	
 	if IsValid(caller:GetActiveWeapon()) and caller:GetActiveWeapon():GetClass() == "cameras_wrench" then
-		if self.Broke then
+		if self:GetIsBroke() then
 			self:RemoveEnts2()
 			self:EmitSound("buttons/lever" .. math.random(1,8) .. ".wav")
 			self:SetBodygroup(2, 0)
-			self.Broke = false
-			net.Start("cl_cam_broke") 
-				net.WriteEntity(self)
-				net.WriteBool(self.Broke)
-			net.Broadcast()
+			self.SetIsBroke(false)
 			return
 		else
 			net.Start('cl_cam_menu')
 				net.WriteEntity(self)
-				net.WriteInt(self.Frequency, 12)
+				net.WriteInt(self:GetFrequency(), 12)
 			net.Send(caller)
 		end
 	end
@@ -117,24 +120,19 @@ end
 
 function ENT:OnTakeDamage()
   
-	if self.Broke or !self.CanBroke then return end
+	if self:GetIsBroke() or !self:GetCanBroke() then return end
   
 	self:EmitSound("ambient/energy/spark" .. math.random(5,6) .. ".wav")
 	
 	self:CreateBrokeCam()
 
-	self.Broke = true
+	self:SetIsBroke(true)
 	
 	local data = EffectData()
 	data:SetOrigin( self:GetPos() )
 	data:SetNormal( self:GetForward() )
 	data:SetScale( 0.2 )
 	util.Effect( "StunstickImpact", data )
-	
-	net.Start("cl_cam_broke")
-		net.WriteEntity(self)
-		net.WriteBool(self.Broke)
-	net.Broadcast()
 
 end
 
@@ -172,7 +170,7 @@ net.Receive( "sv_cam_menu", function(len, ply)
 	
 	if !(IsValid(self)) then return end
 
-	self.Frequency = frequency
+	self:SetFrequency(frequency)
 
 end )
 

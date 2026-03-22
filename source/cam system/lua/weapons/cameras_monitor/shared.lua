@@ -64,14 +64,16 @@ SWEP.WElements = {
 	["monitor"] = { type = "Model", model = "models/props_phx/rt_screen.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(4, 5, 1), angle = Angle( 230, 20, 0), size = Vector(0.16, 0.16, 0.18), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
 
-SWEP.Frequency = 0
-
 SWEP.FiresUnderwater = true
 
 SWEP.CSMuzzleFlashes = false
 
 function SWEP:Deploy()
 	self:SetHoldType( self.HoldType )
+end
+
+function SWEP:SetupDataTables()
+    self:NetworkVar("Int", 0, "Frequency")
 end
 
 function SWEP:PrimaryAttack()
@@ -86,7 +88,7 @@ function SWEP:PrimaryAttack()
 		net.WriteEntity(self)
 		
 		for _, i in ipairs( ents.FindByClass("ent_cam") ) do
-			if i.Frequency != self.Frequency or i.Broke then continue end
+			if i:GetFrequency() != self:GetFrequency() or i.GetIsBroke() then continue end
 			cams[j] = i
 			j = j + 1
 		end
@@ -106,7 +108,7 @@ function SWEP:SecondaryAttack()
 	if CLIENT then return end
 	net.Start('cl_cam_menu')
 		net.WriteEntity(self)
-		net.WriteInt(self.Frequency, 12)
+		net.WriteInt(self:GetFrequency(), 12)
 	net.Send(self.Owner)
 end
 
@@ -122,7 +124,7 @@ function SWEP:Reload()
 	local cams = {}
 	local j = 1
 	for _, i in ipairs( ents.FindByClass("ent_cam") ) do
-		if i.Frequency != self.Frequency or i.Broke then continue end
+		if i:GetFrequency() != self:GetFrequency() or i:GetIsBroke() then continue end
 		cams[j] = i
 		j = j + 1
 	end
@@ -138,6 +140,8 @@ function SWEP:Reload()
 end
 
 function SWEP:Initialize()
+
+	self:SetFrequency(0)
 
 	self:SetHoldType( self.HoldType )
 

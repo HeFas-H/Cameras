@@ -19,22 +19,26 @@ function ENT:Initialize()
 		phys:Wake()
 	end
 	
-	self.Frequency = 0
+	self:SetFrequency(0)
 	self:SetNWEntity('Camera', NULL)
 	self:SetUseType(3)
 
-	self.SavedModel = self:GetModel()
+	self:SetSavedModel(self:GetModel())
 	
 	self:SaveReload()
-
 end 
+
+function ENT:SetupDataTables()
+    self:NetworkVar("Int", 0, "Frequency")
+    self:NetworkVar("String", 0, "SavedModel")
+end
 
 function ENT:SaveReload()
 
 	timer.Simple( 1, function() 
 		if !IsValid(self) then return end
-		if self:GetModel() != self.SavedModel then
-			self:SetModel(self.SavedModel)
+		if self:GetModel() != self:GetSavedModel() then
+			self:SetModel(self:GetSavedModel())
 		end
 		
 		self:PhysicsInit(SOLID_VPHYSICS)
@@ -90,7 +94,7 @@ function ENT:Use(activator, caller)
 	if IsValid(caller:GetActiveWeapon()) and caller:GetActiveWeapon():GetClass() == "cameras_wrench" then
 		net.Start('cl_cam_menu')
 			net.WriteEntity(self)
-			net.WriteInt(self.Frequency, 12)
+			net.WriteInt(self:GetFrequency(), 12)
 		net.Send(caller)
 	else
 		local cams = {}
@@ -99,7 +103,7 @@ function ENT:Use(activator, caller)
 			net.WriteEntity(self)
 			
 			for _, i in ipairs( ents.FindByClass("ent_cam") ) do
-				if i.Frequency != self.Frequency or i.Broke then continue end
+				if i:GetFrequency() != self:GetFrequency() or i:GetIsBroke() then continue end
 				cams[j] = i
 				j = j + 1
 			end

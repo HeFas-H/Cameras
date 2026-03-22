@@ -7,15 +7,6 @@ function ENT:Draw()
 
 end
 
-net.Receive("cl_cam_broke", function()
-	local cam = net.ReadEntity()
-    local bool = net.ReadBool()
-	
-    if !IsValid(cam) then return end
-
-	cam.Broke = bool
-end)
-
 net.Receive( "cl_cam_menu", function() 
 
 	local ply = LocalPlayer()

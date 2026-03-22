@@ -85,8 +85,8 @@ net.Receive( "sv_cam_unbreakable", function()
 
 	if !(IsValid(ent)) then return end
 	
-	ent.CanBroke = !ent.CanBroke
-	print(tostring(ent) .. "`s breakable " .. tostring(ent.CanBroke))
+	ent:SetCanBroke(!ent:GetCanBroke())
+	print(tostring(ent) .. "`s breakable " .. tostring(ent:GetCanBroke()))
 	
 end )
 
@@ -98,12 +98,12 @@ net.Receive( "sv_change_cam_type", function()
 
 	if !(IsValid(ent)) then return end
 
-	if ent.Broke then
+	if ent:GetIsBroke() then
 		ent:RemoveEnts2()
 	end
 	
 	ent:SetModel(model)
-	ent.SavedModel = model
+	ent:SetSavedModel(model)
 	
 	ent:PhysicsInit(SOLID_VPHYSICS)
 	ent:SetMoveType(MOVETYPE_VPHYSICS)
@@ -120,7 +120,7 @@ net.Receive( "sv_change_cam_type", function()
 	ent:ResetSequence("0_idle")
 	ent:SetSequence("0_idle")
 	
-	if ent.Broke then
+	if ent:GetIsBroke() then
 		ent:CreateBrokeCam()
 	end
 	
